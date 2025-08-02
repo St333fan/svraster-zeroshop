@@ -212,15 +212,23 @@ class CameraCreator:
             if not self.skip_blend_alpha:
                 tensor = tensor * mask + int(self.alpha_is_white) * (1 - mask)
 
-        # Conver mask to tensor if there is
+        # Convert mask to tensor if there is
         if mask is not None:
             size = tensor.shape[-2:][::-1]
-            if mask.size != size:
-                mask = mask.resize(size)
-            mask = torch.tensor(np.array(mask), dtype=torch.float32) / 255.0
-            if len(mask.shape) == 3:
-                mask = mask.mean(-1)
-            mask = mask[None]
+            # Check if mask is already a tensor (from alpha channel split above)
+            if isinstance(mask, torch.Tensor):
+                # Resize tensor using interpolation
+                import torch.nn.functional as F
+                target_height, target_width = size[1], size[0]  # size is (width, height)
+                mask = F.interpolate(mask.unsqueeze(0), size=(target_height, target_width), mode='bilinear', align_corners=False).squeeze(0)
+            else:
+                # mask is a PIL Image, resize normally
+                if mask.size != size:
+                    mask = mask.resize(size)
+                mask = torch.tensor(np.array(mask), dtype=torch.float32) / 255.0
+                if len(mask.shape) == 3:
+                    mask = mask.mean(-1)
+                mask = mask[None]
 
         return Camera(
             w2c=w2c,
