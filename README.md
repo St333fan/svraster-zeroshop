@@ -1,3 +1,15 @@
+## Get Started with ZeroSop SVRASTER Meshing (first Setup Repo, scroll down)
+### Generate Camera-Registration first
+
+https://github.com/St333fan/mast3r
+
+### train and extract mesh of all ycb-v objects
+```bash
+chmod +x ./process_all_ycbv.sh
+# segmented (img=30) is trained for 3000 iter and surface (img=50) 5000 iter, everything depends strongly on image size and image number 
+./process_all_ycbv.sh
+```
+
 # Sparse Voxels Rasterizer
 
 ![teaser](./asset/teaser.jpg)
