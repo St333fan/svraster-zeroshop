@@ -1,0 +1,180 @@
+#!/bin/bash
+
+# Bash script to process all objects from 0 to 21 using svraster training and mesh extraction
+# This script runs training and mesh extraction for both segmented and surface variants
+
+# Base path where all object directories are located
+BASE_PATH="/home/stefan/Downloads/objs_sizex10/objs_texture_sizex10"
+
+# Path to the training script
+TRAIN_SCRIPT="train.py"
+
+# Path to the mesh extraction script
+EXTRACT_SCRIPT="extract_mesh.py"
+
+# Config files
+SEGMENTED_CONFIG="cfg/ycbv_segmented.yaml"
+SURFACE_CONFIG="cfg/ycbv_surface.yaml"
+
+# Check if scripts exist
+if [ ! -f "$TRAIN_SCRIPT" ]; then
+    echo "Error: Training script not found at $TRAIN_SCRIPT"
+    exit 1
+fi
+
+if [ ! -f "$EXTRACT_SCRIPT" ]; then
+    echo "Error: Mesh extraction script not found at $EXTRACT_SCRIPT"
+    exit 1
+fi
+
+# Check if config files exist
+if [ ! -f "$SEGMENTED_CONFIG" ]; then
+    echo "Error: Segmented config not found at $SEGMENTED_CONFIG"
+    exit 1
+fi
+
+if [ ! -f "$SURFACE_CONFIG" ]; then
+    echo "Error: Surface config not found at $SURFACE_CONFIG"
+    exit 1
+fi
+
+# Check if the base path exists
+if [ ! -d "$BASE_PATH" ]; then
+    echo "Error: Base path not found at $BASE_PATH"
+    exit 1
+fi
+
+echo "Starting svraster processing for objects 0 to 21..."
+echo "Base path: $BASE_PATH"
+echo "Training script: $TRAIN_SCRIPT"
+echo "Mesh extraction script: $EXTRACT_SCRIPT"
+echo "Segmented config: $SEGMENTED_CONFIG"
+echo "Surface config: $SURFACE_CONFIG"
+echo "========================================"
+
+# Counter for successful and failed processing
+success_count=0
+failed_count=0
+failed_objects=()
+
+# Function to process a single variant (segmented or surface)
+process_variant() {
+    local obj_path="$1"
+    local variant="$2"
+    local config_file="$3"
+    local obj_num="$4"
+    
+    local variant_path="$obj_path/train_pbr/mast3r-sfm/$variant"
+    
+    echo "  Processing $variant variant..."
+    echo "  Variant path: $variant_path"
+    
+    # Check if the variant directory exists
+    if [ ! -d "$variant_path" ]; then
+        echo "  Warning: $variant directory not found: $variant_path"
+        return 1
+    fi
+    
+    # Step 1: Training
+    echo "  Step 1: Training $variant..."
+    echo "  Running: python $TRAIN_SCRIPT --source_path $variant_path --model_path $variant_path --cfg_files $config_file"
+    
+    if ! python "$TRAIN_SCRIPT" --source_path "$variant_path" --model_path "$variant_path" --cfg_files "$config_file"; then
+        echo "  ✗ Failed to train $variant for obj_$obj_num"
+        return 1
+    fi
+    
+    echo "  ✓ Training completed for $variant"
+    
+    # Step 2: Mesh extraction
+    echo "  Step 2: Extracting mesh for $variant..."
+    echo "  Running: python $EXTRACT_SCRIPT $variant_path --use_vert_color --progressive --bbox_scale 1.2 --use_clean"
+    
+    if ! python "$EXTRACT_SCRIPT" "$variant_path" --use_vert_color --progressive --bbox_scale 1.2 --use_clean; then
+        echo "  ✗ Failed to extract mesh for $variant of obj_$obj_num"
+        return 1
+    fi
+    
+    echo "  ✓ Mesh extraction completed for $variant"
+    return 0
+}
+
+# Loop through objects 0 to 21
+for i in {1..21}; do
+    # Format the object number with leading zeros (6 digits)
+    obj_num=$(printf "%06d" $i)
+    obj_path="$BASE_PATH/obj_$obj_num"
+    
+    echo ""
+    echo "Processing object $i (obj_$obj_num)..."
+    echo "Object path: $obj_path"
+    
+    # Check if the object directory exists
+    if [ ! -d "$obj_path" ]; then
+        echo "Warning: Object directory not found: $obj_path"
+        echo "Skipping obj_$obj_num"
+        ((failed_count++))
+        failed_objects+=("obj_$obj_num (directory not found)")
+        continue
+    fi
+    
+    # Track success for this object
+    obj_success=true
+    
+    # Process segmented variant
+    echo ""
+    echo "--- Processing SEGMENTED variant for obj_$obj_num ---"
+    if ! process_variant "$obj_path" "segmented" "$SEGMENTED_CONFIG" "$obj_num"; then
+        echo "Failed to process segmented variant for obj_$obj_num"
+        obj_success=false
+    fi
+    
+    # Process surface variant
+    echo ""
+    echo "--- Processing SURFACE variant for obj_$obj_num ---"
+    if ! process_variant "$obj_path" "surface" "$SURFACE_CONFIG" "$obj_num"; then
+        echo "Failed to process surface variant for obj_$obj_num"
+        obj_success=false
+    fi
+    
+    # Update counters
+    if [ "$obj_success" = true ]; then
+        echo "✓ Successfully processed all variants for obj_$obj_num"
+        ((success_count++))
+    else
+        echo "✗ Failed to process one or more variants for obj_$obj_num"
+        ((failed_count++))
+        failed_objects+=("obj_$obj_num")
+    fi
+    
+    echo "========================================"
+done
+
+echo ""
+echo "========================================"
+echo "SVRASTER PROCESSING COMPLETE"
+echo "========================================"
+echo "Total objects processed: $((success_count + failed_count))"
+echo "Successful: $success_count"
+echo "Failed: $failed_count"
+
+if [ $failed_count -gt 0 ]; then
+    echo ""
+    echo "Failed objects:"
+    for failed_obj in "${failed_objects[@]}"; do
+        echo "  - $failed_obj"
+    done
+fi
+
+echo ""
+if [ $failed_count -eq 0 ]; then
+    echo "All objects processed successfully!"
+    echo "Training and mesh extraction completed for both segmented and surface variants."
+    echo "Results are saved in the respective model paths:"
+    echo "  - {object}/train_pbr/mast3r-sfm/segmented/"
+    echo "  - {object}/train_pbr/mast3r-sfm/surface/"
+    exit 0
+else
+    echo "Some objects failed to process. Check the logs above for details."
+    exit 1
+fi
