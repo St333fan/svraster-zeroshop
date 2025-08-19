@@ -6,7 +6,9 @@ https://github.com/St333fan/mast3r
 ### train and extract mesh of all ycb-v objects
 ```bash
 chmod +x ./process_all_ycbv.sh
+
 # segmented (img=30) is trained for 3000 iter and surface (img=20) 5000 iter, everything depends strongly on image size and image number 
+## adapt path to your dataset in bash script
 ./process_all_ycbv.sh
 ```
 
