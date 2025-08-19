@@ -1,7 +1,8 @@
 ## Get Started with ZeroSop SVRASTER Meshing (first Setup Repo, scroll down)
 ### Generate Camera-Registration first
 
-https://github.com/St333fan/mast3r
+https://github.com/St333fan/mast3r-zeroshop
+https://github.com/St333fan/vggt-zeroshop
 
 ### train and extract mesh of all ycb-v objects
 ```bash
@@ -12,7 +13,7 @@ chmod +x ./process_all_ycbv.sh
 ./process_all_ycbv.sh
 ```
 
-# Sparse Voxels Rasterizer
+# Original Git -- > Sparse Voxels Rasterizer
 
 ![teaser](./asset/teaser.jpg)
 
