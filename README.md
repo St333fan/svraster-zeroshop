@@ -1,7 +1,15 @@
 ## Get Started with ZeroSop SVRASTER Meshing (first Setup Repo, scroll down)
-### Generate Camera-Registration first
+### Run One Example, with masks --> png Files with RGBA (alpha channel)
+```bash
+# parameter values are adapted for single object extraction, which will not work for full scenes; colmap should have a masks folder; iter best set to 3000-5000
+python train.py --source_path <colmap_path> --model_path <colmap_path> --lambda_normal_dmed 0.01 --lambda_sparse_depth 0.25 --lambda_ascending 0.01 --bound_mode pcd --lambda_T_concen 0.1 --lambda_normal_dmean 0.01 --lambda_mask 0.5 --res_downscale 8 
+python extract_mesh.py <colmap_path> --use_vert_color --progressive --bbox_scale 1.2 --use_clean
+```
+
+### Generate Camera-Registration for ZeroShop
 
 https://github.com/St333fan/mast3r-zeroshop
+
 https://github.com/St333fan/vggt-zeroshop
 
 ### train and extract mesh of all ycb-v objects
