@@ -17,7 +17,7 @@ https://github.com/St333fan/vggt-zeroshop
 chmod +x ./process_all_ycbv.sh
 
 # segmented (img=30) is trained for 3000 iter and surface (img=20) 5000 iter, everything depends strongly on image size and image number 
-## adapt path to your dataset in bash script
+## before processing, adapt the dataset path, segmented/surface, mast3r-sfm/vggt
 ./process_all_ycbv.sh
 ```
 
