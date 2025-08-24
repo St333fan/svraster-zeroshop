@@ -57,7 +57,6 @@ def parse_colmap_pts(sfm: pycolmap.Reconstruction, transform: np.array =None):
     for image in sfm.images.values():
         idx = np.array([p.point3D_id for p in image.points2D if p.has_point3D()])
         idx = idx[idx != -1].astype(np.int64)  # Filter out -1 and ensure integer type
-        print(image.name)
         corr[image.name] = points_idmap[idx]
         if len(corr[image.name]) > 0:
             assert corr[image.name].min() >= 0 and corr[image.name].max() < len(xyz)
