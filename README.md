@@ -12,6 +12,24 @@ https://github.com/St333fan/mast3r-zeroshop
 
 https://github.com/St333fan/vggt-zeroshop
 
+### conda install
+```bash
+# svraster
+conda create -n svraster python=3.9
+conda activate svraster
+conda install pytorch==2.5.0 torchvision torchaudio pytorch-cuda=12.4 -c pytorch -c nvidia
+pip install -r requirements.txt
+pip install -e cuda/
+
+# for pymeshlab postprocessing
+conda create -n postprocess python=3.10 
+conda activate postprocess
+conda install -c conda-forge pymeshlab # https://pypi.org/project/pymeshlab/
+pip install scipy
+conda deactivate postprocess
+conda activate svraster # start with this
+```
+
 ### train and extract mesh of all ycb-v objects
 ```bash
 chmod +x ./process_all_ycbv.sh

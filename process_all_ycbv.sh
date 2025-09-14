@@ -4,11 +4,12 @@
 # This script runs training and mesh extraction for both segmented and surface variants
 
 # Base path where all object directories are located
-BASE_PATH="/home/stefan/Downloads/dataset_test_real_labor"
+BASE_PATH="/home/stefan/Projects/Grounded-SAM-2-zeroshop/dataset"
 
 # Set to true or false to enable/disable processing of each variant
 PROCESS_SURFACE=true
 PROCESS_SEGMENTED=false
+POSTPROCESSING=true
 
 # Choose the parent folder for variants: 'mast3r-sfm' or 'vggt'
 VARIANT_PARENT="mast3r-sfm"  # or 'vggt'
@@ -101,6 +102,53 @@ process_variant() {
     fi
 
     echo "  ✓ Mesh extraction completed for $variant"
+
+    # Post-processing mesh if enabled
+    if [ "$POSTPROCESSING" = true ]; then
+        echo "  Step 3: Post-processing mesh for $variant..."
+
+        # Activate pymeshlab environment
+        source ~/miniconda3/etc/profile.d/conda.sh
+        conda activate postprocess
+
+        bundler_file="$variant_path/images/scene.bundle.out"
+        bundler_txt="$variant_path/images/scene.list.txt"
+        object_info_json="$obj_path/scene/output/object_info.json"
+
+        # Find mesh file for svraster (latest .ply in mesh/latest)
+        mesh_dir="$variant_path/mesh/latest"
+        mesh_file=""
+        if [ -d "$mesh_dir" ]; then
+            mesh_file=$(find "$mesh_dir" -maxdepth 1 -type f -name "*.ply" | head -n 1)
+        fi
+
+        if [ -z "$mesh_file" ]; then
+            echo "  Warning: No mesh file found for post-processing in $mesh_dir"
+            return 1
+        fi
+
+        if [ ! -f "$bundler_file" ] || [ ! -f "$bundler_txt" ]; then
+            echo "  Warning: Bundler files not found for post-processing."
+            return 1
+        fi
+
+        if [ ! -f "$object_info_json" ]; then
+            echo "  Warning: object_info.json not found for post-processing."
+            return 1
+        fi
+
+        echo "  Running: python postprocess.py --mesh \"$mesh_file\" --bundler \"$bundler_file\" --bundler_txt \"$bundler_txt\" --object_info_json \"$object_info_json\""
+        if ! python postprocess.py --mesh "$mesh_file" --bundler "$bundler_file" --bundler_txt "$bundler_txt" --object_info_json "$object_info_json"; then
+            echo "  ✗ Failed to post-process mesh for $variant of obj_$obj_num"
+            return 1
+        fi
+
+        echo "  ✓ Post-processing completed for $variant"
+
+        # Return to original environment
+        conda activate svraster
+    fi
+
     return 0
 }
 
