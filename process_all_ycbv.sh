@@ -119,7 +119,12 @@ process_variant() {
         mesh_dir="$variant_path/mesh/latest"
         mesh_file=""
         if [ -d "$mesh_dir" ]; then
+            # Prefer .ply file that does NOT have 'processed' in its name
+            mesh_file=$(find "$mesh_dir" -maxdepth 1 -type f -name "*.ply" ! -name "*obj*" | head -n 1)
+            # If none found, fall back to any .ply file
+            if [ -z "$mesh_file" ]; then
             mesh_file=$(find "$mesh_dir" -maxdepth 1 -type f -name "*.ply" | head -n 1)
+            fi
         fi
 
         if [ -z "$mesh_file" ]; then

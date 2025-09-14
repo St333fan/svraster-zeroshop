@@ -6,6 +6,18 @@ import argparse
 import json
 
 def postprocess_mesh(mesh_path="", bundler_path="", txt_path="", euler_angles=None, texturize=True, estimated_height=None):
+
+    # Find the folder that matches the pattern obj_XXXXXX in the path
+    path_parts = os.path.normpath(mesh_path).split(os.sep)
+    folder_name = None
+    for part in reversed(path_parts):
+        if part.startswith("obj_") and part[4:].isdigit():
+            folder_name = part
+            break
+    if folder_name is None:
+        # Fallback to immediate parent folder
+        folder_name = os.path.basename(os.path.dirname(mesh_path))
+
     ms = pymeshlab.MeshSet()
 
     # Load project rasters/images
@@ -19,9 +31,9 @@ def postprocess_mesh(mesh_path="", bundler_path="", txt_path="", euler_angles=No
 
     # Remove small disconnected components (floaters)
     print("Removing floaters...")
-    ms.meshing_remove_connected_component_by_face_number(mincomponentsize=100)
+    ms.meshing_remove_connected_component_by_face_number(mincomponentsize=5000)
     ms.meshing_decimation_quadric_edge_collapse(targetfacenum=50000, preservetopology=True)
-    ms.meshing_remove_connected_component_by_face_number(mincomponentsize=100)
+    ms.meshing_remove_connected_component_by_face_number(mincomponentsize=5000)
 
     # Repair non-manifold geometry
     print("Repairing non-manifold edges and vertices...")
@@ -49,7 +61,7 @@ def postprocess_mesh(mesh_path="", bundler_path="", txt_path="", euler_angles=No
     # Generate texture from images ! pip install pymeshlab==2023.12.post3
     print("Generating texture from images...")
     ms.compute_texcoord_parametrization_and_texture_from_registered_rasters(
-        texturename="texture.png",
+        texturename=f"{folder_name}.png",
         texturesize=2048,
     )
 
@@ -92,9 +104,10 @@ def postprocess_mesh(mesh_path="", bundler_path="", txt_path="", euler_angles=No
         else:
             print("Warning: Current mesh height is zero, skipping scaling.")
 
-    base, ext = os.path.splitext(mesh_path)
-    processed_path = f"{base}_processed{ext}"
-    ms.save_current_mesh(processed_path, save_textures=True)
+    # Save mesh and texture using the parent folder name (e.g., obj_000001)
+    save_dir = os.path.dirname(mesh_path)
+    mesh_save_path = os.path.join(save_dir, f"{folder_name}.ply")
+    ms.save_current_mesh(mesh_save_path, save_textures=True)
 
 def load_camera_info(filename):
     """
