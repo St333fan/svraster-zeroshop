@@ -143,7 +143,7 @@ process_variant() {
         fi
 
         echo "  Running: python postprocess.py --mesh \"$mesh_file\" --bundler \"$bundler_file\" --bundler_txt \"$bundler_txt\" --object_info_json \"$object_info_json\""
-        if ! python postprocess.py --mesh "$mesh_file" --bundler "$bundler_file" --bundler_txt "$bundler_txt" --object_info_json "$object_info_json"; then
+        if ! python postprocess.py --mesh "$mesh_file" --bundler "$bundler_file" --bundler_txt "$bundler_txt" --object_info_json "$object_info_json" --texture; then
             echo "  ✗ Failed to post-process mesh for $variant of obj_$obj_num"
             return 1
         fi

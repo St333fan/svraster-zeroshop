@@ -53,17 +53,18 @@ def postprocess_mesh(mesh_path="", bundler_path="", txt_path="", euler_angles=No
     ms.meshing_repair_non_manifold_edges()
     ms.meshing_repair_non_manifold_vertices()
     
-    # Set vertex color to white
-    print("Setting vertex color to white...")
-    ms.set_color_per_vertex(color1=pymeshlab.Color(255, 255, 255, 255))
-    print(f"Vertices after coloring: {ms.current_mesh().vertex_number()}")
-
-    # Generate texture from images ! pip install pymeshlab==2023.12.post3
-    print("Generating texture from images...")
-    ms.compute_texcoord_parametrization_and_texture_from_registered_rasters(
-        texturename=f"{folder_name}.png",
-        texturesize=2048,
-    )
+    if texturize:
+        # Set vertex color to white
+        print("Setting vertex color to white...")
+        ms.set_color_per_vertex(color1=pymeshlab.Color(255, 255, 255, 255))
+        print(f"Vertices after coloring: {ms.current_mesh().vertex_number()}")
+        
+        # Generate texture from images ! pip install pymeshlab==2023.12.post3
+        print("Generating texture from images...")
+        ms.compute_texcoord_parametrization_and_texture_from_registered_rasters(
+            texturename=f"{folder_name}.png",
+            texturesize=2048,
+        )
 
     # Center the Mesh
     print("Centering the mesh at the origin...")
@@ -85,29 +86,34 @@ def postprocess_mesh(mesh_path="", bundler_path="", txt_path="", euler_angles=No
 
     # Scale mesh to match estimated_height if provided
     if estimated_height is not None:
-        print("Scaling mesh to match estimated height in mm; 1m = 1000mm ...")
-        bbox = ms.current_mesh().bounding_box()
-        current_height = bbox.max()[2] - bbox.min()[2]
-
         # Object Detection and Pose Estimation uses mm as unit
         estimated_height = float(estimated_height) * 1000.0  # Convert meters to millimeters
+    else:
+        estimated_height = 200.0  # Default height in mm if not provided
 
-        if current_height > 0:
-            scale_factor = estimated_height / current_height
-            print(f"Current height: {current_height}, scale factor: {scale_factor}")
-            ms.compute_matrix_from_scaling_or_normalization(
-                axisx=scale_factor,
-                uniformflag=True,
-                scalecenter='origin',
-                freeze=True
-            )
-        else:
-            print("Warning: Current mesh height is zero, skipping scaling.")
+    print("Scaling mesh to match estimated height in mm; 1m = 1000mm ...")
+    bbox = ms.current_mesh().bounding_box()
+    current_height = bbox.max()[2] - bbox.min()[2]
+
+    if current_height > 0:
+        scale_factor = estimated_height / current_height
+        print(f"Current height: {current_height}, scale factor: {scale_factor}")
+        ms.compute_matrix_from_scaling_or_normalization(
+            axisx=scale_factor,
+            uniformflag=True,
+            scalecenter='origin',
+            freeze=True
+        )
+    else:
+        print("Warning: Current mesh height is zero, skipping scaling.")
 
     # Save mesh and texture using the parent folder name (e.g., obj_000001)
     save_dir = os.path.dirname(mesh_path)
     mesh_save_path = os.path.join(save_dir, f"{folder_name}.ply")
-    ms.save_current_mesh(mesh_save_path, save_textures=True)
+    if texturize:
+        ms.save_current_mesh(mesh_save_path, save_textures=True)
+    else:
+        ms.save_current_mesh(mesh_save_path, save_textures=False)
 
 def load_camera_info(filename):
     """
@@ -265,6 +271,7 @@ if __name__ == "__main__":
     parser.add_argument("--bundler_txt", type=str, required=False, help="Path to image list txt file (e.g., images/scene.list.txt)")
     parser.add_argument("--no-rotation", action="store_true", help="Skip rotation calculation and application")
     parser.add_argument("--object_info_json", type=str, required=False, help="Path to object_info.json file with estimated_height")
+    parser.add_argument("--texture", action="store_true", help="Skip texturization step")
     args = parser.parse_args()
 
     # args.mesh = "/home/stefan/Projects/Grounded-SAM-2-zeroshop/dataset/obj_000001/train_pbr/mast3r-sfm/surface/2DGS_output/train/ours_30000/fuse_post.ply"
@@ -286,6 +293,6 @@ if __name__ == "__main__":
         rotation = calculate_rotation(args.bundler, args.bundler_txt)
 
     if estimated_height is not None:
-        postprocess_mesh(args.mesh, args.bundler, args.bundler_txt, euler_angles=rotation, estimated_height=estimated_height)
+        postprocess_mesh(args.mesh, args.bundler, args.bundler_txt, euler_angles=rotation, estimated_height=estimated_height, texturize=args.texture)
     else:
-        postprocess_mesh(args.mesh, args.bundler, args.bundler_txt, euler_angles=rotation)
+        postprocess_mesh(args.mesh, args.bundler, args.bundler_txt, euler_angles=rotation, texturize=args.texture)
