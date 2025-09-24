@@ -269,8 +269,8 @@ if __name__ == "__main__":
     parser.add_argument("--mesh", type=str, required=False, help="Path to input mesh file (e.g., fuse_post.ply)")
     parser.add_argument("--bundler", type=str, required=False, help="Path to Bundler output file (e.g., images/scene.bundler.out)")
     parser.add_argument("--bundler_txt", type=str, required=False, help="Path to image list txt file (e.g., images/scene.list.txt)")
-    parser.add_argument("--no-rotation", action="store_true", help="Skip rotation calculation and application")
-    parser.add_argument("--object_info_json", type=str, required=False, help="Path to object_info.json file with estimated_height")
+    parser.add_argument("--no_rotation", action="store_true", help="Skip rotation calculation and application")
+    parser.add_argument("--object_info_json", type=str, required=False, default=None, help="Path to object_info.json file with estimated_height")
     parser.add_argument("--texture", action="store_true", help="Skip texturization step")
     args = parser.parse_args()
 
@@ -281,7 +281,7 @@ if __name__ == "__main__":
 
     # Load JSON info if provided
     estimated_height = None
-    if args.object_info_json:
+    if not args.object_info_json==None:
         with open(args.object_info_json, 'r') as jf:
             obj_info = json.load(jf)
             estimated_height = obj_info.get("estimated_height", None)

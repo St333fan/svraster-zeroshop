@@ -4,7 +4,7 @@
 # This script runs training and mesh extraction for both segmented and surface variants
 
 # Base path where all object directories are located
-BASE_PATH="/home/stefan/Projects/Grounded-SAM-2-zeroshop/dataset"
+BASE_PATH="/home/stefan/Downloads/ycbv_fr_zeroshop_dataset_mast3r_svraster_2dgs"
 
 # Set to true or false to enable/disable processing of each variant
 PROCESS_SURFACE=true
@@ -139,7 +139,6 @@ process_variant() {
 
         if [ ! -f "$object_info_json" ]; then
             echo "  Warning: object_info.json not found for post-processing."
-            return 1
         fi
 
         echo "  Running: python postprocess.py --mesh \"$mesh_file\" --bundler \"$bundler_file\" --bundler_txt \"$bundler_txt\" --object_info_json \"$object_info_json\""
