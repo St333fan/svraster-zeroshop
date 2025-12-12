@@ -1,6 +1,6 @@
-FROM nvidia/cuda:12.4.1-cudnn-devel-ubuntu22.04
+FROM nvidia/cuda:11.7.1-cudnn8-devel-ubuntu22.04
 
-LABEL description="Docker container for SVRaster with CUDA 12.4 support"
+LABEL description="Docker container for SVRaster with CUDA 11.7 support"
 ARG DEBIAN_FRONTEND=noninteractive
 ENV CONDA_DIR=/opt/conda
 ENV PATH=$CONDA_DIR/bin:$PATH
@@ -41,10 +41,14 @@ WORKDIR /home/appuser/svraster
 RUN conda create -n svraster python=3.9 -y && \
     echo "source activate svraster" > ~/.bashrc
 
-# Install PyTorch with CUDA support FIRST (before other requirements)
+# Install CUDA toolkit 11.7 aligned with PyTorch
+RUN /bin/bash -c "source activate svraster && \
+    conda install -y -c \"nvidia/label/cuda-11.7.0\" cuda-toolkit"
+
+# Install PyTorch 1.13.1 with CUDA 11.7 support FIRST (before other requirements)
 # Use pip with explicit CUDA wheel to avoid XPU detection issues
 RUN /bin/bash -c "source activate svraster && \
-    pip install torch==2.5.0+cu124 torchvision==0.20.0+cu124 torchaudio==2.5.0+cu124 --index-url https://download.pytorch.org/whl/cu124"
+    pip install torch==1.13.1+cu117 torchvision==0.14.1+cu117 torchaudio==0.13.1+cu117 --index-url https://download.pytorch.org/whl/cu117"
 
 # Install ninja for faster builds
 RUN /bin/bash -c "source activate svraster && \

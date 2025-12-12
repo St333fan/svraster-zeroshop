@@ -21,4 +21,6 @@ gpytoolbox
 
 lpips
 pytorch-msssim
+# fused-ssim is installed separately in Dockerfile with --no-build-isolation
+# maybe change
 git+https://github.com/rahul-goel/fused-ssim/

@@ -4,7 +4,7 @@
 # This script runs training and mesh extraction for both segmented and surface variants
 
 # Base path where all object directories are located
-BASE_PATH="/home/stefan/Downloads/ycbv_fr_zeroshop_dataset_mast3r_svraster_2dgs"
+BASE_PATH="/code/datasets/ycbv_real_subset"
 
 # Set to true or false to enable/disable processing of each variant
 PROCESS_SURFACE=true
