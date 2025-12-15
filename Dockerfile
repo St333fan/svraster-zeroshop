@@ -11,6 +11,8 @@ RUN apt-get update && apt-get install -y \
     git \
     build-essential \
     libgl1-mesa-glx \
+    libgl1-mesa-dri \
+    mesa-utils \
     libglib2.0-0 \
     libsm6 \
     libxext6 \
@@ -75,6 +77,12 @@ RUN conda create -n postprocess python=3.10 -y && \
 
 # Set default environment to svraster
 ENV CONDA_DEFAULT_ENV=svraster
+
+# Rebuild CUDA extension to ensure _C.so is compiled
+RUN /bin/bash -c "source activate svraster && \
+    cd /home/appuser/svraster/cuda && \
+    pip uninstall -y svraster_cuda && \
+    TORCH_CUDA_ARCH_LIST='7.5;8.0;8.6;8.9;9.0' pip install --no-build-isolation --no-cache-dir -e ."
 
 # Activate svraster environment by default
 SHELL ["/bin/bash", "-c"]

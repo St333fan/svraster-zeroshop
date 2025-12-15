@@ -61,10 +61,15 @@ def postprocess_mesh(mesh_path="", bundler_path="", txt_path="", euler_angles=No
         
         # Generate texture from images ! pip install pymeshlab==2023.12.post3
         print("Generating texture from images...")
-        ms.compute_texcoord_parametrization_and_texture_from_registered_rasters(
-            texturename=f"{folder_name}.png",
-            texturesize=2048,
-        )
+        try:
+            ms.compute_texcoord_parametrization_and_texture_from_registered_rasters(
+                texturename=f"{folder_name}.png",
+                texturesize=2048,
+            )
+            print("Texture generation successful")
+        except Exception as e:
+            print(f"Warning: Texture generation failed: {e}")
+            print("Continuing without texture...")
 
     # Center the Mesh
     print("Centering the mesh at the origin...")
